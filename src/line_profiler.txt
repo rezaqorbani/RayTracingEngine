@@ -1,0 +1,96 @@
+Timer unit: 1e-06 s
+
+Total time: 1.42196 s
+File: raytracing.py
+Function: normalize at line 5
+
+Line #      Hits         Time  Per Hit   % Time  Line Contents
+==============================================================
+     5                                           @profile
+     6                                           def normalize(x):
+     7                                                   # This function normalizes a vector.
+     8    326736    1381296.4      4.2     97.1          x /= np.linalg.norm(x)
+     9    326736      40662.1      0.1      2.9          return x
+
+Total time: 0.98202 s
+File: raytracing.py
+Function: intersect_sphere at line 11
+
+Line #      Hits         Time  Per Hit   % Time  Line Contents
+==============================================================
+    11                                           @profile
+    12                                           def intersect_sphere(O, D, S, R):
+    13                                                   # Return the distance from O to the intersection
+    14                                                   # of the ray (O, D) with the sphere (S, R), or
+    15                                                   # +inf if there is no intersection.
+    16                                                   # O and S are 3D points, D (direction) is a
+    17                                                   # normalized vector, R is a scalar.
+    18    160000     229727.3      1.4     23.4          a = np.dot(D, D)
+    19    160000      90468.0      0.6      9.2          OS = O - S
+    20    160000     225606.5      1.4     23.0          b = 2 * np.dot(D, OS)
+    21    160000     226915.7      1.4     23.1          c = np.dot(OS, OS) - R * R
+    22    160000      61630.2      0.4      6.3          disc = b * b - 4 * a * c
+    23    118316      26323.1      0.2      2.7          if disc > 0:
+    24     41684      30605.9      0.7      3.1              distSqrt = np.sqrt(disc)
+    25     41684      20012.1      0.5      2.0              q = (-b - distSqrt) / 2.0 if b < 0 \
+    26                                                           else (-b + distSqrt) / 2.0
+    27     41684       7712.9      0.2      0.8              t0 = q / a
+    28     41684       5738.2      0.1      0.6              t1 = c / q
+    29     41684      22388.6      0.5      2.3              t0, t1 = min(t0, t1), max(t0, t1)
+    30     41684       7426.3      0.2      0.8              if t1 >= 0:
+    31     41684       8867.8      0.2      0.9                  return t1 if t0 < 0 else t0
+    32    118316      18597.6      0.2      1.9          return np.inf
+
+Total time: 2.93239 s
+File: raytracing.py
+Function: trace_ray at line 34
+
+Line #      Hits         Time  Per Hit   % Time  Line Contents
+==============================================================
+    34                                           @profile
+    35                                           def trace_ray(O, D):
+    36                                                   # Find first point of intersection with the scene.
+    37    160000    1447756.2      9.0     49.4          t = intersect_sphere(O, D, position, radius)
+    38                                                   # No intersection?
+    39    118316      24064.3      0.2      0.8          if t == np.inf:
+    40    118316      13369.7      0.1      0.5              return
+    41                                                   # Find the point of intersection on the object.
+    42     41684      66513.7      1.6      2.3          M = O + D * t
+    43     41684     281505.4      6.8      9.6          N = normalize(M - position)
+    44     41684     267822.2      6.4      9.1          toL = normalize(L - M)
+    45     41684     263713.3      6.3      9.0          toO = normalize(O - M)
+    46                                                   # Ambient light.
+    47     41684       4759.2      0.1      0.2          col = ambient
+    48                                                   # Lambert shading (diffuse).
+    49     41684     151545.4      3.6      5.2          col += diffuse * max(np.dot(N, toL), 0) * color
+    50                                                   # Blinn-Phong shading (specular).
+    51     41684      60063.8      1.4      2.0          col += specular_c * color_light * \
+    52     41684     341249.7      8.2     11.6              max(np.dot(N, normalize(toL + toO)), 0) \
+    53     41684       4901.7      0.1      0.2              ** specular_k
+    54     41684       5127.7      0.1      0.2          return col
+
+Total time: 5.20805 s
+File: raytracing.py
+Function: run at line 56
+
+Line #      Hits         Time  Per Hit   % Time  Line Contents
+==============================================================
+    56                                           @profile 
+    57                                           def run():
+    58         1         10.2     10.2      0.0          img = np.zeros((h, w, 3))
+    59                                                   # Loop through all pixels.
+    60       400        228.6      0.6      0.0          for i, x in enumerate(np.linspace(-1, 1, w)):
+    61    160000      47936.5      0.3      0.9              for j, y in enumerate(np.linspace(-1, 1, h)):
+    62                                                           # Position of the pixel.
+    63    160000      56651.9      0.4      1.1                  Q[0], Q[1] = x, y
+    64                                                           # Direction of the ray going through
+    65                                                           # the optical center.
+    66    160000    1090953.3      6.8     20.9                  D = normalize(Q - O)
+    67                                                           # Launch the ray and get the color
+    68                                                           # of the pixel.
+    69    160000    3376485.2     21.1     64.8                  col = trace_ray(O, D)
+    70    118316      17692.0      0.1      0.3                  if col is None:
+    71    118316      14613.6      0.1      0.3                      continue
+    72     41684     603478.8     14.5     11.6                  img[h - j - 1, i, :] = np.clip(col, 0, 1)
+    73         1          0.1      0.1      0.0          return img
+
