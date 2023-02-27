@@ -44,22 +44,22 @@ Line #    Mem usage    Increment  Occurrences   Line Contents
     34   64.973 MiB 10307277.750 MiB      160000   @profile
     35                                         def trace_ray(O, D):
     36                                                 # Find first point of intersection with the scene.
-    37   64.973 MiB 10307277.750 MiB      160000           t = intersect_sphere(O, D, position, radius)
+    37   64.973 MiB 10307277.750 MiB      160000       t = intersect_sphere(O, D, position, radius)
     38                                                 # No intersection?
     39   64.973 MiB    0.000 MiB      160000           if t == np.inf:
     40   64.973 MiB    0.000 MiB      118316               return
     41                                                 # Find the point of intersection on the object.
     42   64.973 MiB    0.000 MiB       41684           M = O + D * t
-    43   64.973 MiB 2704626.953 MiB       41684           N = normalize(M - position)
-    44   64.973 MiB 2704626.953 MiB       41684           toL = normalize(L - M)
-    45   64.973 MiB 2704626.953 MiB       41684           toO = normalize(O - M)
+    43   64.973 MiB 2704626.953 MiB       41684        N = normalize(M - position)
+    44   64.973 MiB 2704626.953 MiB       41684        toL = normalize(L - M)
+    45   64.973 MiB 2704626.953 MiB       41684        toO = normalize(O - M)
     46                                                 # Ambient light.
     47   64.973 MiB    0.000 MiB       41684           col = ambient
     48                                                 # Lambert shading (diffuse).
     49   64.973 MiB    0.000 MiB       41684           col += diffuse * max(np.dot(N, toL), 0) * color
     50                                                 # Blinn-Phong shading (specular).
     51   64.973 MiB    0.000 MiB       83368           col += specular_c * color_light * \
-    52   64.973 MiB 2704626.953 MiB       83368               max(np.dot(N, normalize(toL + toO)), 0) \
+    52   64.973 MiB 2704626.953 MiB       83368        max(np.dot(N, normalize(toL + toO)), 0) \
     53   64.973 MiB    0.000 MiB       41684               ** specular_k
     54   64.973 MiB    0.000 MiB       41684           return col
 
@@ -78,10 +78,10 @@ Line #    Mem usage    Increment  Occurrences   Line Contents
     63   64.973 MiB    0.000 MiB      160000                   Q[0], Q[1] = x, y
     64                                                         # Direction of the ray going through
     65                                                         # the optical center.
-    66   64.973 MiB 10307277.750 MiB      160000                   D = normalize(Q - O)
+    66   64.973 MiB 10307277.750 MiB      160000               D = normalize(Q - O)
     67                                                         # Launch the ray and get the color
     68                                                         # of the pixel.
-    69   64.973 MiB 10307277.750 MiB      160000                   col = trace_ray(O, D)
+    69   64.973 MiB 10307277.750 MiB      160000               col = trace_ray(O, D)
     70   64.973 MiB    0.000 MiB      160000                   if col is None:
     71   64.973 MiB    0.000 MiB      118316                       continue
     72   64.973 MiB    2.312 MiB       41684                   img[h - j - 1, i, :] = np.clip(col, 0, 1)
