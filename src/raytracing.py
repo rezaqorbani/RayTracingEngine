@@ -1,5 +1,7 @@
 import numpy as np
 import matplotlib.pyplot as plt
+import time
+
 w, h = 400, 400  # Size of the screen in pixels.
 
 def normalize(x):
@@ -86,8 +88,13 @@ if __name__ == '__main__':
     O = np.array([0., 0., -1.])  # Position.
     Q = np.array([0., 0., 0.])  # Pointing to.
 
-    img = run()
-    fig, ax = plt.subplots(1, 1, figsize=(10, 10))
-    ax.imshow(img)
-    ax.set_axis_off()
-    plt.show()
+    file_name = "timing_original.txt"
+    iters = 10
+    with open(file_name, "w+") as f:
+                    f.truncate(0)  # Clear the contents of the file
+                    for i in range(iters):
+                        ts = time.perf_counter()
+                        img = run()
+                        te = time.perf_counter()
+                        f.write('%.6f' % (te-ts))
+                        f.write('\n')
