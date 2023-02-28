@@ -1,12 +1,36 @@
 import numpy as np
+import numba
 import matplotlib.pyplot as plt
+import time
+import os
+
 w, h = 400, 400  # Size of the screen in pixels.
 
+# a timing decorator using time.perf_counter()
+def timer(file_name, iter):
+    def timeit_decorator(method):
+        def timed(*args, **kw):
+            with open(file_name, "r+") as f:
+                f.truncate(0)  # Clear the contents of the file
+                for i in range(iter):
+                    ts = time.perf_counter()
+                    result = method(*args, **kw)
+                    te = time.perf_counter()
+                    f.write(te-ts)
+                    f.write('\n')
+        return timed
+    return timeit_decorator
+
+@numba.jit(nopython=True)
 def normalize(x):
         # This function normalizes a vector.
         x /= np.linalg.norm(x)
         return x
+@numba.jit(nopython=True)
+def clip(x, x_min, x_max):
+        return np.minimum(x_max, np.maximum(x, x_min))
 
+@numba.jit(nopython=True)
 def intersect_sphere(O, D, S, R):
         # Return the distance from O to the intersection
         # of the ray (O, D) with the sphere (S, R), or
@@ -29,6 +53,7 @@ def intersect_sphere(O, D, S, R):
                 return t1 if t0 < 0 else t0
         return np.inf
 
+@numba.jit(nopython=True)
 def trace_ray(O, D):
         # Find first point of intersection with the scene.
         t = intersect_sphere(O, D, position, radius)
@@ -40,17 +65,21 @@ def trace_ray(O, D):
         N = normalize(M - position)
         toL = normalize(L - M)
         toO = normalize(O - M)
+
+        term = diffuse * max(np.dot(N, toL), 0) * color
+
         # Ambient light.
-        col = ambient
+        col = np.full_like(color, ambient)
         # Lambert shading (diffuse).
-        col += diffuse * max(np.dot(N, toL), 0) * color
+        col += term
         # Blinn-Phong shading (specular).
         col += specular_c * color_light * \
             max(np.dot(N, normalize(toL + toO)), 0) \
             ** specular_k
         return col
 
-def run():
+@numba.jit(nopython=True)
+def run(O, Q):
         img = np.zeros((h, w, 3))
         # Loop through all pixels.
         for i, x in enumerate(np.linspace(-1, 1, w)):
@@ -65,7 +94,7 @@ def run():
                 col = trace_ray(O, D)
                 if col is None:
                     continue
-                img[h - j - 1, i, :] = np.clip(col, 0, 1)
+                img[h - j - 1, i, :] = clip(col, 0, 1)
         return img
 
 if __name__ == '__main__':
@@ -83,11 +112,23 @@ if __name__ == '__main__':
     ambient = .05
         
     # Camera.
-    O = np.array([0., 0., -1.])  # Position.
-    Q = np.array([0., 0., 0.])  # Pointing to.
+    O = np.array([0., 0., -1.] )  # Position.
+    Q = np.array([0., 0., 0.] ) 
 
-    img = run()
-    fig, ax = plt.subplots(1, 1, figsize=(10, 10))
-    ax.imshow(img)
-    ax.set_axis_off()
-    plt.show()
+    # run the code for the first time to compile the code 
+    img = run(O, Q)
+
+    # time the compiled code
+    file_name = "timing_numba.txt"
+    iters = 10
+    with open(file_name, "w+") as f:
+                    f.truncate(0)  # Clear the contents of the file
+                    for i in range(iters):
+                        ts = time.perf_counter()
+                        img = run(O, Q)
+                        te = time.perf_counter()
+                        f.write('%.6f' % (te-ts))
+                        f.write('\n')
+    
+
+
