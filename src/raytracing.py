@@ -21,16 +21,21 @@ def timer(file_name, iter):
         return timed
     return timeit_decorator
 
+
 @numba.jit(nopython=True)
+@profile
 def normalize(x):
         # This function normalizes a vector.
         x /= np.linalg.norm(x)
         return x
+
 @numba.jit(nopython=True)
+@profile
 def clip(x, x_min, x_max):
         return np.minimum(x_max, np.maximum(x, x_min))
 
 @numba.jit(nopython=True)
+@profile
 def intersect_sphere(O, D, S, R):
         # Return the distance from O to the intersection
         # of the ray (O, D) with the sphere (S, R), or
@@ -54,6 +59,7 @@ def intersect_sphere(O, D, S, R):
         return np.inf
 
 @numba.jit(nopython=True)
+@profile
 def trace_ray(O, D):
         # Find first point of intersection with the scene.
         t = intersect_sphere(O, D, position, radius)
@@ -79,6 +85,7 @@ def trace_ray(O, D):
         return col
 
 @numba.jit(nopython=True)
+@profile
 def run(O, Q):
         img = np.zeros((h, w, 3))
         # Loop through all pixels.
