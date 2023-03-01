@@ -1,6 +1,7 @@
+# cython: language_level=3
 import numpy as np
 import matplotlib.pyplot as plt
-# from raytracing_cython import normalize, intersect_sphere, trace_ray, run
+import cdef
 w, h = 400, 400  # Size of the screen in pixels.
 
 def normalize(x):
@@ -71,24 +72,18 @@ def run(O, Q):
 
 if __name__ == '__main__':
     # Sphere properties.
-    position = np.array([0., 0., 1.])
-    radius = 1.
-    color = np.array([0., 0., 1.])
-    diffuse = 1.
-    specular_c = 1.
-    specular_k = 50
+    cdef dobule[:] position = np.array([0., 0., 1.])
+    cdef double radius = 1.
+    cdef dobule[:] color = np.array([0., 0., 1.])
+    cdef double diffuse = 1.
+    cdef double pecular_c = 1.
+    cdef int specular_k = 50
         
     # Light position and color.
-    L = np.array([5., 5., -10.])
-    color_light = np.ones(3)
+    cdef dobule[:] L = np.array([5., 5., -10.])
+    cdef int[:] color_light = np.ones(3)
     ambient = .05
         
     # Camera.
     O = np.array([0., 0., -1.])  # Position.
     Q = np.array([0., 0., 0.])  # Pointing to.
-
-    img = run(O, Q)
-    fig, ax = plt.subplots(1, 1, figsize=(10, 10))
-    ax.imshow(img)
-    ax.set_axis_off()
-    plt.show()
