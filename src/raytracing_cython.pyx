@@ -1,24 +1,91 @@
 # cython: language_level=3
 import numpy as np
 import matplotlib.pyplot as plt
-import cdef
-w, h = 400, 400  # Size of the screen in pixels.
 
-def normalize(x):
+cdef double[:] position = np.array([0., 0., 1.])
+cdef double radius = 1.
+cdef double[:] color = np.array([0., 0., 1.])
+cdef double diffuse = 1.
+cdef double specular_c = 1.
+cdef int specular_k = 50
+# Sphere properties.
+    
+# Light position and color.
+cdef double[:] L = np.array([5., 5., -10.])
+cdef double[:] color_light = np.array([1., 1., 1.])
+cdef double ambient = .05
+    
+# Camera.
+cdef double[:] O = np.array([0., 0., -1.])  # Position.
+cdef double[:] Q = np.array([0., 0., 0.])  # Pointing to.
+
+# Size of the screen in pixels.
+cdef int w = 400
+cdef int h = 400 
+
+cdef double[:] clip(double[:] a, int min_value, int max_value):
+    cdef Py_ssize_t j
+    cdef double[:] retval = np.empty(a.shape[0])
+
+    for j in range(a.shape[0]):
+        retval[j] = min(max(a[j], min_value), max_value)
+    
+    return retval
+
+cdef double[:] add(double[:] a, double[:] b):
+    cdef Py_ssize_t j
+    cdef double[:] retval = np.empty(a.shape[0])
+
+    for j in range(a.shape[0]):
+        retval[j] = a[j] + b[j]
+
+    return retval
+
+cdef double[:] substract(double[:] a, double[:] b):
+    cdef Py_ssize_t j
+    cdef double[:] retval = np.empty(a.shape[0])
+
+    for j in range(a.shape[0]):
+        retval[j] = a[j] - b[j]
+
+    return retval
+
+cdef double[:] multiply(double[:] a, double[:] b):
+    cdef Py_ssize_t j
+    cdef double[:] retval = np.empty(a.shape[0])
+
+    for j in range(a.shape[0]):
+        retval[j] = a[j] * b[j]
+
+    return retval
+
+def normalize( double[:] x):
         # This function normalizes a vector.
         x /= np.linalg.norm(x)
         return x
 
-def intersect_sphere(O, D, S, R):
+def intersect_sphere(  double[:] O,  double[:] D,
+                       double[:] S,   double R):
         # Return the distance from O to the intersection
         # of the ray (O, D) with the sphere (S, R), or
         # +inf if there is no intersection.
         # O and S are 3D points, D (direction) is a
         # normalized vector, R is a scalar.
+        cdef double[:] OS 
+        cdef double a
+        cdef double b
+        cdef double c
+        cdef double disc
+        cdef double distSqrt
+        cdef double q
+        cdef double t0
+        cdef double t1
+
+
         a = np.dot(D, D)
-        OS = O - S
+        OS = substract(O , S)
         b = 2 * np.dot(D, OS)
-        c = np.dot(OS, OS) - R * R
+        c = np.dot(OS, OS) - R*R
         disc = b * b - 4 * a * c
         if disc > 0:
             distSqrt = np.sqrt(disc)
@@ -31,59 +98,57 @@ def intersect_sphere(O, D, S, R):
                 return t1 if t0 < 0 else t0
         return np.inf
 
-def trace_ray(O, D, ambient=0.05):
+def trace_ray(  double[:]O,  double[:] D):
+        cdef double[:] col
+        cdef double t
+        cdef double[:] M
+        cdef double[:] N
+        cdef double[:] toL
+        cdef double[:] toO
+        cdef double[:] term
+        
         # Find first point of intersection with the scene.
         t = intersect_sphere(O, D, position, radius)
         # No intersection?
         if t == np.inf:
             return
         # Find the point of intersection on the object.
-        M = O + D * t
-        N = normalize(M - position)
-        toL = normalize(L - M)
-        toO = normalize(O - M)
+
+        M = add(O, D * np.full_like(D, t))
+        N = normalize(substract(M, position))
+        toL = normalize(substract(L,M))
+        toO = normalize(substract(O,M))
+        term = np.full_like(color, diffuse) * max(np.dot(N, toL), 0) * color
         # Ambient light.
-        col = ambient
+        col = np.full_like(color, ambient)
         # Lambert shading (diffuse).
-        col += diffuse * max(np.dot(N, toL), 0) * color
+        col = add(col, term )
         # Blinn-Phong shading (specular).
-        col += specular_c * color_light * \
-            max(np.dot(N, normalize(toL + toO)), 0) \
-            ** specular_k
+        col = add(col, multiply( multiply(np.full_like(color_light, specular_c) , color_light) , \
+            np.full_like( color_light, max(np.dot(N, normalize(add(toL , toO))), 0) \
+            ** specular_k)))
         return col
 
-def run(O, Q):
-        img = np.zeros((h, w, 3))
+def run():
+        cdef double[:, :, :] img = np.empty((h, w, 3))
         # Loop through all pixels.
+        cdef Py_ssize_t i, j
+        cdef double x, y
+        cdef double[:] col
+
         for i, x in enumerate(np.linspace(-1, 1, w)):
             for j, y in enumerate(np.linspace(-1, 1, h)):
                 # Position of the pixel.
                 Q[0], Q[1] = x, y
                 # Direction of the ray going through
                 # the optical center.
-                D = normalize(Q - O)
+                D = normalize(substract(Q, O))
                 # Launch the ray and get the color
                 # of the pixel.
                 col = trace_ray(O, D)
                 if col is None:
                     continue
-                img[h - j - 1, i, :] = np.clip(col, 0, 1)
+                img[h - j - 1, i, :] = clip(col, 0, 1)
         return img
+    
 
-if __name__ == '__main__':
-    # Sphere properties.
-    cdef dobule[:] position = np.array([0., 0., 1.])
-    cdef double radius = 1.
-    cdef dobule[:] color = np.array([0., 0., 1.])
-    cdef double diffuse = 1.
-    cdef double pecular_c = 1.
-    cdef int specular_k = 50
-        
-    # Light position and color.
-    cdef dobule[:] L = np.array([5., 5., -10.])
-    cdef int[:] color_light = np.ones(3)
-    ambient = .05
-        
-    # Camera.
-    O = np.array([0., 0., -1.])  # Position.
-    Q = np.array([0., 0., 0.])  # Pointing to.
