@@ -5,8 +5,7 @@ import time
 
 
 if __name__ == '__main__':
-    O = np.array([0., 0., -1.])  # Position.
-    Q = np.array([0., 0., 0.])  # Pointing to.
+
     file_name = "timing_cython.txt"
     iters = 10
     with open(file_name, "w+") as f:

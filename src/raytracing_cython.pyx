@@ -1,6 +1,6 @@
 # cython: language_level=3
 import numpy as np
-import matplotlib.pyplot as plt
+import cython
 
 cdef double[:] position = np.array([0., 0., 1.])
 cdef double radius = 1.
@@ -24,7 +24,7 @@ cdef int w = 400
 cdef int h = 400 
 
 cdef double[:] clip(double[:] a, int min_value, int max_value):
-    cdef Py_ssize_t j
+    cdef int j
     cdef double[:] retval = np.empty(a.shape[0])
 
     for j in range(a.shape[0]):
@@ -32,8 +32,9 @@ cdef double[:] clip(double[:] a, int min_value, int max_value):
     
     return retval
 
+
 cdef double[:] add(double[:] a, double[:] b):
-    cdef Py_ssize_t j
+    cdef int j
     cdef double[:] retval = np.empty(a.shape[0])
 
     for j in range(a.shape[0]):
@@ -42,13 +43,14 @@ cdef double[:] add(double[:] a, double[:] b):
     return retval
 
 cdef double[:] substract(double[:] a, double[:] b):
-    cdef Py_ssize_t j
+    cdef int j
     cdef double[:] retval = np.empty(a.shape[0])
 
     for j in range(a.shape[0]):
         retval[j] = a[j] - b[j]
 
     return retval
+
 
 cdef double[:] multiply(double[:] a, double[:] b):
     cdef Py_ssize_t j
@@ -58,12 +60,16 @@ cdef double[:] multiply(double[:] a, double[:] b):
         retval[j] = a[j] * b[j]
 
     return retval
-
+@cython.boundscheck(False)
+@cython.wraparound(False)
+@cython.cdivision(True)
 def normalize( double[:] x):
         # This function normalizes a vector.
         x /= np.linalg.norm(x)
         return x
-
+@cython.boundscheck(False)
+@cython.wraparound(False)
+@cython.cdivision(True)
 def intersect_sphere(  double[:] O,  double[:] D,
                        double[:] S,   double R):
         # Return the distance from O to the intersection
@@ -98,6 +104,9 @@ def intersect_sphere(  double[:] O,  double[:] D,
                 return t1 if t0 < 0 else t0
         return np.inf
 
+@cython.boundscheck(False)
+@cython.wraparound(False)
+@cython.cdivision(True)
 def trace_ray(  double[:]O,  double[:] D):
         cdef double[:] col
         cdef double t
@@ -129,10 +138,13 @@ def trace_ray(  double[:]O,  double[:] D):
             ** specular_k)))
         return col
 
+@cython.boundscheck(False)
+@cython.wraparound(False)
+@cython.cdivision(True)
 def run():
         cdef double[:, :, :] img = np.empty((h, w, 3))
         # Loop through all pixels.
-        cdef Py_ssize_t i, j
+        cdef int i, j
         cdef double x, y
         cdef double[:] col
 
@@ -150,5 +162,3 @@ def run():
                     continue
                 img[h - j - 1, i, :] = clip(col, 0, 1)
         return img
-    
-
