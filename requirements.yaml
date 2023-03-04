@@ -1,0 +1,10 @@
+name: hpc_project
+channels:
+  - defaults
+dependencies:
+  - python=3.10
+  - numpy
+  - matplotlib
+  - numba
+  - scipy
+prefix: /home/reza/anaconda3/envs/hpc_project
