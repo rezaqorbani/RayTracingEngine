@@ -2,30 +2,30 @@
 import numpy as np
 import cython
 
-cdef double[:] position = np.array([0., 0., 1.])
+cdef double[::1] position = np.array([0., 0., 1.])
 cdef double radius = 1.
-cdef double[:] color = np.array([0., 0., 1.])
+cdef double[::1] color = np.array([0., 0., 1.])
 cdef double diffuse = 1.
 cdef double specular_c = 1.
 cdef int specular_k = 50
 # Sphere properties.
     
 # Light position and color.
-cdef double[:] L = np.array([5., 5., -10.])
-cdef double[:] color_light = np.array([1., 1., 1.])
+cdef double[::1] L = np.array([5., 5., -10.])
+cdef double[::1] color_light = np.array([1., 1., 1.])
 cdef double ambient = .05
     
 # Camera.
-cdef double[:] O = np.array([0., 0., -1.])  # Position.
-cdef double[:] Q = np.array([0., 0., 0.])  # Pointing to.
+cdef double[::1] O = np.array([0., 0., -1.])  # Position.
+cdef double[::1] Q = np.array([0., 0., 0.])  # Pointing to.
 
 # Size of the screen in pixels.
 cdef int w = 400
 cdef int h = 400 
 
-cdef double[:] clip(double[:] a, int min_value, int max_value):
+cdef double[::1] clip(double[::1] a, int min_value, int max_value):
     cdef int j
-    cdef double[:] retval = np.empty(a.shape[0])
+    cdef double[::1] retval = np.empty(a.shape[0])
 
     for j in range(a.shape[0]):
         retval[j] = min(max(a[j], min_value), max_value)
@@ -33,18 +33,18 @@ cdef double[:] clip(double[:] a, int min_value, int max_value):
     return retval
 
 
-cdef double[:] add(double[:] a, double[:] b):
+cdef double[::1] add(double[::1] a, double[::1] b):
     cdef int j
-    cdef double[:] retval = np.empty(a.shape[0])
+    cdef double[::1] retval = np.empty(a.shape[0])
 
     for j in range(a.shape[0]):
         retval[j] = a[j] + b[j]
 
     return retval
 
-cdef double[:] substract(double[:] a, double[:] b):
+cdef double[::1] substract(double[::1] a, double[::1] b):
     cdef int j
-    cdef double[:] retval = np.empty(a.shape[0])
+    cdef double[::1] retval = np.empty(a.shape[0])
 
     for j in range(a.shape[0]):
         retval[j] = a[j] - b[j]
@@ -52,9 +52,9 @@ cdef double[:] substract(double[:] a, double[:] b):
     return retval
 
 
-cdef double[:] multiply(double[:] a, double[:] b):
+cdef double[::1] multiply(double[::1] a, double[::1] b):
     cdef Py_ssize_t j
-    cdef double[:] retval = np.empty(a.shape[0])
+    cdef double[::1] retval = np.empty(a.shape[0])
 
     for j in range(a.shape[0]):
         retval[j] = a[j] * b[j]
@@ -63,21 +63,21 @@ cdef double[:] multiply(double[:] a, double[:] b):
 @cython.boundscheck(False)
 @cython.wraparound(False)
 @cython.cdivision(True)
-def normalize( double[:] x):
+def normalize( double[::1] x):
         # This function normalizes a vector.
         x /= np.linalg.norm(x)
         return x
 @cython.boundscheck(False)
 @cython.wraparound(False)
 @cython.cdivision(True)
-def intersect_sphere(  double[:] O,  double[:] D,
-                       double[:] S,   double R):
+def intersect_sphere(  double[::1] O,  double[::1] D,
+                       double[::1] S,   double R):
         # Return the distance from O to the intersection
         # of the ray (O, D) with the sphere (S, R), or
         # +inf if there is no intersection.
         # O and S are 3D points, D (direction) is a
         # normalized vector, R is a scalar.
-        cdef double[:] OS 
+        cdef double[::1] OS 
         cdef double a
         cdef double b
         cdef double c
@@ -107,14 +107,14 @@ def intersect_sphere(  double[:] O,  double[:] D,
 @cython.boundscheck(False)
 @cython.wraparound(False)
 @cython.cdivision(True)
-def trace_ray(  double[:]O,  double[:] D):
-        cdef double[:] col
+def trace_ray(  double[::1] O,  double[::1] D):
+        cdef double[::1] col
         cdef double t
-        cdef double[:] M
-        cdef double[:] N
-        cdef double[:] toL
-        cdef double[:] toO
-        cdef double[:] term
+        cdef double[::1] M
+        cdef double[::1] N
+        cdef double[::1] toL
+        cdef double[::1] toO
+        cdef double[::1] term
         
         # Find first point of intersection with the scene.
         t = intersect_sphere(O, D, position, radius)
@@ -146,7 +146,8 @@ def run():
         # Loop through all pixels.
         cdef int i, j
         cdef double x, y
-        cdef double[:] col
+        cdef double[::1] col
+        cdef double[::1] D
 
         for i, x in enumerate(np.linspace(-1, 1, w)):
             for j, y in enumerate(np.linspace(-1, 1, h)):
