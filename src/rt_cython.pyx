@@ -1,9 +1,24 @@
 import numpy as np
-import matplotlib.pyplot as plt
-import time
-from rt_cython import run as rtc_run
+import cython
 
-w, h = 400, 400  # Size of the screen in pixels.
+cdef int w = 400
+cdef int h = 400
+# Sphere properties.
+position = np.array([0., 0., 1.])
+radius = 1.
+color = np.array([0., 0., 1.])
+diffuse = 1.
+specular_c = 1.
+specular_k = 50
+    
+# Light position and color.
+L = np.array([5., 5., -10.])
+color_light = np.ones(3)
+ambient = .05
+    
+# Camera.
+O = np.array([0., 0., -1.])  # Position.
+Q = np.array([0., 0., 0.])  # Pointing to.
 
 def normalize(x):
         # This function normalizes a vector.
@@ -48,14 +63,21 @@ def trace_ray(O, D):
         # Lambert shading (diffuse).
         col += diffuse * max(np.dot(N, toL), 0) * color
         # Blinn-Phong shading (specular).
-        col += specular_c * color_light * \
-            (max(np.dot(N, normalize(toL + toO)), 0)) \
-            ** specular_k
+        term = specular_c * color_light 
+        term = term * max(np.dot(N, normalize(toL + toO)), 0) ** specular_k
+        col += term
         return col
 
+@cython.boundscheck(False)
+@cython.wraparound(False)
+@cython.cdivision(True)
 def run():
-        img = np.zeros((h, w, 3))
         # Loop through all pixels.
+        cdef double[:, :, :] img = np.empty((h, w, 3))
+        cdef int i, j
+        cdef double x, y
+        cdef double[:] arr
+        
         for i, x in enumerate(np.linspace(-1, 1, w)):
             for j, y in enumerate(np.linspace(-1, 1, h)):
                 # Position of the pixel.
@@ -68,34 +90,6 @@ def run():
                 col = trace_ray(O, D)
                 if col is None:
                     continue
-                img[h - j - 1, i, :] = np.clip(col, 0, 1)
+                arr = np.clip(col, 0, 1)
+                img[h - j - 1, i, : ] = arr
         return img
-
-if __name__ == '__main__':
-    # Sphere properties.
-    position = np.array([0., 0., 1.])
-    radius = 1.
-    color = np.array([0., 0., 1.])
-    diffuse = 1.
-    specular_c = 1.
-    specular_k = 50
-        
-    # Light position and color.
-    L = np.array([5., 5., -10.])
-    color_light = np.ones(3)
-    ambient = .05
-        
-    # Camera.
-    O = np.array([0., 0., -1.])  # Position.
-    Q = np.array([0., 0., 0.])  # Pointing to.
-
-    file_name = "timing_original.txt"
-    iters = 4
-    with open(file_name, "w+") as f:
-                    f.truncate(0)  # Clear the contents of the file
-                    for i in range(iters):
-                        ts = time.perf_counter()
-                        img = rtc_run()
-                        te = time.perf_counter()
-                        f.write('%.6f' % (te-ts))
-                        f.write('\n')
