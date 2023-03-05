@@ -89,7 +89,7 @@ if __name__ == '__main__':
     O = np.array([0., 0., -1.])  # Position.
     Q = np.array([0., 0., 0.])  # Pointing to.
 
-    file_name = "timing_original.txt"
+    file_name = "timing_cython_test.txt"
     iters = 4
     with open(file_name, "w+") as f:
                     f.truncate(0)  # Clear the contents of the file
