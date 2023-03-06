@@ -90,7 +90,7 @@ if __name__ == '__main__':
     Q = np.array([0., 0., 0.])  # Pointing to.
 
     file_name = "timing_cython_test.txt"
-    iters = 4
+    iters = 10
     with open(file_name, "w+") as f:
                     f.truncate(0)  # Clear the contents of the file
                     for i in range(iters):

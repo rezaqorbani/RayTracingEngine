@@ -1,33 +1,30 @@
 import numpy as np
-import cython
 
+DTYPE = np.float64
 cdef Py_ssize_t w = 400
 cdef Py_ssize_t h = 400
 # Sphere properties.
-position = np.array([0., 0., 1.])
+position = np.array([0., 0., 1.], dtype=DTYPE)
 cdef double radius = 1.
-color = np.array([0., 0., 1.])
+color = np.array([0., 0., 1.], dtype=DTYPE)
 cdef double diffuse = 1.
 cdef double specular_c = 1.
 cdef double specular_k = 50
     
 # Light position and color.
-L = np.array([5., 5., -10.])
-color_light = np.ones(3)
+L = np.array([5., 5., -10.], dtype=DTYPE)
+color_light = np.ones(3, dtype=DTYPE)
 cdef double ambient = .05
     
 # Camera.
-O = np.array([0., 0., -1.])  # Position.
-Q = np.array([0., 0., 0.])  # Pointing to.
-
+O = np.array([0., 0., -1.], dtype=DTYPE)  # Position.
+Q = np.array([0., 0., 0.], dtype=DTYPE)  # Pointing to.
 
 def normalize(x):
         # This function normalizes a vector.
         x /= np.linalg.norm(x)
         return x
 
-
-@cython.cdivision(True)
 def intersect_sphere(   O,   D,
                         S,    R):
         # Return the distance from O to the intersection
@@ -44,7 +41,6 @@ def intersect_sphere(   O,   D,
         cdef double q
         cdef double t0
         cdef double t1
-
 
         a = np.dot(D, D)
         OS = O - S
@@ -85,15 +81,14 @@ def trace_ray(O, D):
         col += term
         return col
 
-@cython.boundscheck(False)
 def run():
         # Loop through all pixels.
-        #cdef double[:, :, :] img = np.empty((h, w, 3))
+        cdef double[:, :, ::1] img = np.empty((h, w, 3), dtype=np.float64)
         cdef Py_ssize_t i, j
         cdef double x, y
-        #cdef double[:] arr
-        #cdef double[:] D = np.empty(3)
-        img = np.empty((h, w, 3))
+        cdef double[::1] arr
+        cdef double[::1] D = np.empty((3,), dtype=np.float64)
+        #img = np.empty((h, w, 3), dtype=np.float64)
         for i, x in enumerate(np.linspace(-1, 1, w)):
             for j, y in enumerate(np.linspace(-1, 1, h)):
                 # Position of the pixel.
