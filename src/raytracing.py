@@ -1,7 +1,7 @@
 import numpy as np
 import matplotlib.pyplot as plt
 import time
-from rt_cython import run as rtc_run
+import rt_cython as rt
 
 w, h = 400, 400  # Size of the screen in pixels.
 
@@ -34,7 +34,7 @@ def intersect_sphere(O, D, S, R):
 
 def trace_ray(O, D):
         # Find first point of intersection with the scene.
-        t = intersect_sphere(O, D, position, radius)
+        t = rt.intersect_sphere(O, D, position, radius)
         # No intersection?
         if t == np.inf:
             return
@@ -96,7 +96,7 @@ if __name__ == '__main__':
                     f.truncate(0)  # Clear the contents of the file
                     for i in range(iters):
                         ts = time.perf_counter()
-                        img = rtc_run()
+                        img = run()
                         te = time.perf_counter()
                         times[i] = te-ts
                         f.write('%.6f' % (te-ts))
