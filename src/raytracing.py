@@ -123,14 +123,22 @@ if __name__ == '__main__':
     # time the compiled code
     file_name = "timing_numba.txt"
     iters = 10
+    times = np.zeros(10)
     with open(file_name, "w+") as f:
                     f.truncate(0)  # Clear the contents of the file
                     for i in range(iters):
                         ts = time.perf_counter()
                         img = run(O, Q)
                         te = time.perf_counter()
+                        times[i] = te-ts
                         f.write('%.6f' % (te-ts))
                         f.write('\n')
+                    mean = times.mean()
+                    std = times.std()
+                    f.write('Mean: %.6f' % mean)
+                    f.write('\n')
+                    f.write('Std: %.6f' % std)
+                    f.write('\n')
     
 
 
